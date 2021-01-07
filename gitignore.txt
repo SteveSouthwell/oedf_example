@@ -1,3 +1,5 @@
 *.pl
+*.r
 .gradle/**
 build/**
+bin/**
