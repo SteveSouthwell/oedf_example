@@ -1,0 +1,64 @@
+ /*
+ * AuthExchange Build (oepas)
+ * S.E. Southwell - Progress
+ * 
+ * Learn how to create Gradle builds at https://guides.gradle.org/creating-new-gradle-builds
+ */
+
+plugins {
+  id "base"
+  id "progress.openedge.abl-base" version "1.0.0"
+}
+
+import com.progress.gradle.abl.tasks.*
+
+
+abl{
+  avmOptions {}
+  compileOptions{}
+  println "OE version: ${openedgeVersion}"
+  println "buildDir: ${buildDir}"
+  println "DLC: ${System.getenv('DLC')}"
+}
+
+
+// Database Connections: 
+task connectsports(type: DBConnection){
+  id='db1'
+  dbName="sports2020"
+  host=sportsHost
+  port=sportsPort
+}
+
+
+// This section defines the ABLCompile task.
+task compile(type: ABLCompile){
+  dependsOn connectsports
+  source("./src")
+  include('**/*.p', '**/*.cls')
+  rcodeDir= './build/rcode'
+  propath = files('./src',
+        "${System.getenv('DLC')}/tty", 
+        "${System.getenv('DLC')}/tty/netlib/OpenEdge.Net.pl", 
+        "${System.getenv('DLC')}/tty/OpenEdge.Core.pl")
+  compileOptions{
+    
+    //outputType='json'
+    multiCompile.enabled=true
+  }
+  dbConnectionReferenceId("db1")
+}
+
+
+// Put the code into a .pl file
+task packageCode(type: PL){
+    dependsOn compile
+    plFile = "${buildDir}/dist/sample.pl"
+    from("${buildDir}/rcode")
+    include("**/*.r")
+}
+
+
+defaultTasks 'clean', 'packageCode'
+
+
